@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>NF-e XML Analyzer</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23127a4a'/%3E%3Cpath d='M9 8h10l5 5v11H9z' fill='%23fff'/%3E%3Cpath d='M12 17h9M12 20.5h9M12 13.5h5' stroke='%23127a4a' stroke-width='1.6'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <div class="logo" aria-hidden="true">
+        <svg viewBox="0 0 32 32"><rect width="32" height="32" rx="7"/><path d="M9 8h10l5 5v11H9z" fill="#fff"/><path d="M12 17h9M12 20.5h9M12 13.5h5" stroke="currentColor" stroke-width="1.6"/></svg>
+      </div>
+      <div>
+        <h1 data-i18n="appTitle"></h1>
+        <p class="subtitle" data-i18n="appSubtitle"></p>
+      </div>
+    </div>
+    <label class="lang">
+      <span class="sr" data-i18n="language"></span>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>
+      <select id="langSelect"></select>
+    </label>
+  </header>
+
+  <main>
+    <section id="drop" class="drop" tabindex="0">
+      <input type="file" id="fileInput" multiple accept=".xml,.zip,text/xml,application/xml,application/zip" hidden>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4M7 9l5-5 5 5M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>
+      <div>
+        <strong data-i18n="dropTitle"></strong>
+        <p data-i18n="dropHint"></p>
+      </div>
+      <button type="button" class="btn primary" id="browseBtn" data-i18n="browse"></button>
+    </section>
+    <p class="privacy">🔒 <span data-i18n="privacy"></span></p>
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+    <section class="kpis" id="kpis"></section>
+
+    <section class="panel">
+      <div class="searchbar">
+        <div class="search">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
+          <input type="search" id="q" autocomplete="off" data-i18n-ph="searchPlaceholder">
+        </div>
+        <select id="qField" data-i18n-title="searchIn"></select>
+        <button type="button" class="btn" id="filterToggle"><span data-i18n="filters"></span> <span id="filterCount" class="badge" hidden></span></button>
+      </div>
+
+      <div class="filters" id="filters" hidden>
+        <label><span data-i18n="dateFrom"></span><input type="date" id="fFrom"></label>
+        <label><span data-i18n="dateTo"></span><input type="date" id="fTo"></label>
+        <label><span data-i18n="minValue"></span><input type="number" id="fMin" step="0.01" min="0"></label>
+        <label><span data-i18n="maxValue"></span><input type="number" id="fMax" step="0.01" min="0"></label>
+        <label><span data-i18n="type"></span><select id="fType"></select></label>
+        <label><span data-i18n="status"></span><select id="fStatus"></select></label>
+        <label><span data-i18n="model"></span><select id="fModel"><option value="">*</option><option value="55">55 – NF-e</option><option value="65">65 – NFC-e</option></select></label>
+        <button type="button" class="btn ghost" id="resetFilters" data-i18n="resetFilters"></button>
+      </div>
+
+      <div class="toolbar">
+        <nav class="tabs" role="tablist">
+          <button role="tab" class="tab active" data-tab="notes" data-i18n="tabNotes"></button>
+          <button role="tab" class="tab" data-tab="items" data-i18n="tabItems"></button>
+          <button role="tab" class="tab" data-tab="summary" data-i18n="tabSummary"></button>
+        </nav>
+        <div class="actions">
+          <span id="countInfo" class="muted"></span>
+          <button type="button" class="btn" id="pdfSelected"><span data-i18n="pdfSelected"></span> <span id="selCount" class="badge" hidden></span></button>
+          <button type="button" class="btn" id="exportCsv" data-i18n="exportCsv"></button>
+          <button type="button" class="btn" id="exportItems" data-i18n="exportItemsCsv"></button>
+          <button type="button" class="btn danger ghost" id="clearAll" data-i18n="clearAll"></button>
+        </div>
+      </div>
+
+      <div id="view-notes" class="view"></div>
+      <div id="view-items" class="view" hidden></div>
+      <div id="view-summary" class="view" hidden></div>
+    </section>
+  </main>
+
+  <dialog id="detail" class="detail">
+    <div class="detail-head">
+      <div id="detailTitle"></div>
+      <div class="detail-actions">
+        <button type="button" class="btn primary" id="detailPdf">PDF</button>
+        <button type="button" class="btn" id="detailPreview">👁</button>
+        <button type="button" class="btn" id="detailXml">XML</button>
+        <button type="button" class="btn ghost icon" id="detailClose" aria-label="Close">✕</button>
+      </div>
+    </div>
+    <div id="detailBody" class="detail-body"></div>
+  </dialog>
+
+  <div id="busy" class="busy" hidden><div class="spinner"></div><span id="busyText"></span></div>
+
+  <script src="vendor/jspdf.umd.min.js"></script>
+  <script src="vendor/jszip.min.js"></script>
+  <script src="vendor/qrcode.min.js"></script>
+  <script src="assets/i18n.js"></script>
+  <script src="assets/parser.js"></script>
+  <script src="assets/danfe.js"></script>
+  <script src="assets/app.js"></script>
+</body>
+</html>
